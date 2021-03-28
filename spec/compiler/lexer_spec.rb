@@ -238,18 +238,12 @@ TOK
 
     describe 'comments' do
       it 'ignores comments' do
-        input = StringIO.new(
-          <<~CODE
-            /*this is a comment*/
-          CODE
-        )
+        input = StringIO.new('/*this is a comment*/')
         output = StringIO.new
 
         Compiler::Lexer.new(input, output).run
 
-        expect(output.string).to eq <<-TOK
-   2    1 End_of_input
-        TOK
+        expect(output.string).to eq "   1   22 End_of_input\n"
       end
 
       it 'comments can have extra * inside' do
@@ -280,6 +274,53 @@ TOK
         expect(output.string).to eq <<-TOK
    2    1 End_of_input
         TOK
+      end
+
+      it 'comments can be multiline' do
+        input = StringIO.new(
+          <<~CODE
+            /*
+            this is my comment
+            */
+          CODE
+        )
+        output = StringIO.new
+
+        Compiler::Lexer.new(input, output).run
+
+        expect(output.string).to eq <<-TOK
+   4    1 End_of_input
+        TOK
+      end
+
+      it 'code can follow multiline comment' do
+        input = StringIO.new("foo = /* a \ncomment */ 5;")
+        output = StringIO.new
+
+        Compiler::Lexer.new(input, output).run
+
+        expect(output.string).to eq(
+          "   1    1 Identifier           foo\n" \
+          "   1    5 Op_assign\n" \
+          "   2   12 Integer              5\n" \
+          "   2   13 Semicolon\n" \
+          "   2   14 End_of_input\n"
+        )
+      end
+
+      it 'comments can be embedded in a line' do
+        input = StringIO.new("foo = /* a comment */ 5;")
+        output = StringIO.new
+
+        Compiler::Lexer.new(input, output).run
+
+        expect(output.string).to eq(
+          "   1    1 Identifier           foo\n" \
+          "   1    5 Op_assign\n" \
+          "   1   23 Integer              5\n" \
+          "   1   24 Semicolon\n" \
+          "   1   25 End_of_input\n"
+        )
       end
     end
 

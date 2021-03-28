@@ -52,7 +52,8 @@ module Compiler
     private
 
     def build_regexp
-      Regexp.new TOKENS.map { |k, v| "(?<#{k}>#{v})" }.join('|')
+      pattern = TOKENS.map { |k, v| "(?<#{k}>#{v})" }.join('|')
+      Regexp.new(pattern, Regexp::MULTILINE)
     end
 
     def tokenize(source_code)
@@ -61,14 +62,23 @@ module Compiler
       loop do
         matches = @regexp.match(source_code, start_pos)
 
-        if !matches
-          break
-        elsif matches[:newline]
+        break if !matches
+
+        token = matched_token(matches)
+        if token == 'newline'
           @line_no += 1
           @line_pos = 1
           line_starts_at = matches.end(0)
+        elsif token == 'Comment'
+          comment_lines = matches[0].split("\n")
+          if comment_lines.length > 1
+            @line_no += comment_lines.length - 1
+            line_starts_at = @line_pos + matches[0].length - comment_lines[-1].length
+            @line_pos = comment_lines[-1].length + 1
+          else
+            @line_pos = matches.end(0) - line_starts_at + 1
+          end
         else
-          token = matches.named_captures.select { |k, v| v }.map { |k, v| k }.first
           value = token_value(token, matches)
           @line_pos = matches.begin(0) - line_starts_at + 1
           write_token(token, value) unless ignore_token?(token)
@@ -77,6 +87,10 @@ module Compiler
 
         start_pos = matches.end(0)
       end
+    end
+
+    def matched_token(matches)
+      matches.named_captures.select { |k, v| v }.map { |k, v| k }.first
     end
 
     def ignore_token?(token)
