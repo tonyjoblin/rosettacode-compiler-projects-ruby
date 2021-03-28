@@ -8,6 +8,7 @@ gemspec
 gem "rake", "~> 13.0"
 
 group :development, :test do
+  gem "byebug", "~> 11.1"
   gem "guard", "~> 2.16"
   gem "guard-rspec", "~> 4.7"
   gem "rspec", "~> 3.0"
