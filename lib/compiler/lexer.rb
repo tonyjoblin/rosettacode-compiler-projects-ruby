@@ -44,7 +44,8 @@ module Compiler
     end
 
     def run
-      @input.each_line { |line| tokenize_line(line) }
+      source_code = @input.read()
+      tokenize(source_code)
       write_token :End_of_input
     end
 
@@ -54,25 +55,27 @@ module Compiler
       Regexp.new TOKENS.map { |k, v| "(?<#{k}>#{v})" }.join('|')
     end
 
-    def tokenize_line(line)
+    def tokenize(source_code)
+      line_starts_at = 0
       start_pos = 0
       loop do
-        matches = @regexp.match(line, start_pos)
+        matches = @regexp.match(source_code, start_pos)
 
         if !matches
           break
         elsif matches[:newline]
           @line_no += 1
           @line_pos = 1
-          break
+          line_starts_at = matches.end(0)
+        else
+          token = matches.named_captures.select { |k, v| v }.map { |k, v| k }.first
+          value = token_value(token, matches)
+          @line_pos = matches.begin(0) - line_starts_at + 1
+          write_token(token, value) unless ignore_token?(token)
+          @line_pos = matches.end(0) - line_starts_at + 1
         end
 
-        token = matches.named_captures.select { |k, v| v }.map { |k, v| k }.first
-        value = token_value(token, matches)
-        @line_pos = matches.begin(0) + 1
-        write_token(token, value) unless ignore_token?(token)
         start_pos = matches.end(0)
-        @line_pos = start_pos + 1
       end
     end
 
