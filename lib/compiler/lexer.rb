@@ -1,3 +1,6 @@
+require_relative './token'
+require_relative './token_printer'
+
 module Compiler
   class Lexer
     TOKENS = {
@@ -41,12 +44,13 @@ module Compiler
       @line_no = 1
       @line_pos = 1
       @regexp = build_regexp
+      @printer = TokenPrinter.new(output)
     end
 
     def run
       source_code = @input.read()
       tokenize(source_code)
-      write_token :End_of_input
+      @printer.print(Token.new(@line_no, @line_pos, :End_of_input))
     end
 
     private
@@ -81,7 +85,8 @@ module Compiler
         else
           value = token_value(token, matches)
           @line_pos = matches.begin(0) - line_starts_at + 1
-          write_token(token, value) unless ignore_token?(token)
+          t = Token.new(@line_no, @line_pos, token, value)
+          @printer.print(t) unless ignore_token?(token)
           @line_pos = matches.end(0) - line_starts_at + 1
         end
 
@@ -109,26 +114,6 @@ module Compiler
       else
         nil
       end
-    end
-
-    def write_token(token, value = nil)
-      if value
-        @output.write("#{line_no_str} #{line_pos_str} #{token_str(token)} #{value}\n")
-      else
-        @output.write("#{line_no_str} #{line_pos_str} #{token}\n")
-      end
-    end
-
-    def line_no_str
-      sprintf('%4d', @line_no)
-    end
-
-    def line_pos_str
-      sprintf('%4d', @line_pos)
-    end
-
-    def token_str(token)
-      sprintf('%-20s', token)
     end
   end
 end
