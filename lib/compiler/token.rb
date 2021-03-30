@@ -1,11 +1,11 @@
 module Compiler
   class Token
-    attr_reader :line, :pos, :token, :value
+    attr_reader :line, :pos, :type, :value
 
-    def initialize(line, pos, token, value = nil)
+    def initialize(line, pos, type, value = nil)
       @line = line
       @pos = pos
-      @token = token
+      @type = type
       @value = value
     end
   end

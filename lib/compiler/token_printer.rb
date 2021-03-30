@@ -21,7 +21,7 @@ module Compiler
 
     def print_token_without_value(token)
       print_line_and_position(token)
-      @output.write("#{token.token}\n")
+      @output.write("#{token.type}\n")
     end
 
     def print_line_and_position(token)
@@ -37,7 +37,7 @@ module Compiler
     end
 
     def token_str(token)
-      sprintf('%-20s', token.token)
+      sprintf('%-20s', token.type)
     end
   end
 end

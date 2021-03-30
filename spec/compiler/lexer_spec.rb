@@ -285,6 +285,15 @@ RSpec.describe Compiler::Lexer do
         expect(output.string).to eq "   4    1 End_of_input\n"
       end
 
+      it 'multiline comment tracks line pos after comment' do
+        input = StringIO.new("/* a\ncomment */")
+        output = StringIO.new
+
+        Compiler::Lexer.new(input, output).run
+
+        expect(output.string).to eq "   2   11 End_of_input\n"
+      end
+
       it 'code can follow multiline comment' do
         input = StringIO.new("foo = /* a \ncomment */ 5;")
         output = StringIO.new
